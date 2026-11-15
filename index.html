@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: allow-list of where the page may load scripts, styles, fonts, images and video from -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>v0ufer — контент, серверы, код</title>
+<meta name="description" content="v0ufer: играю, стримлю и строю свои миры. Шортсы про Minecraft, эдиты по CS2, свои серверы и сайты для них.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="v0ufer">
+<meta property="og:description" content="Играю, стримлю и строю свои миры. Don't panic, just play.">
+<meta name="theme-color" content="#05060a">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+  :root {
+    --u: min(calc(100vw / 1600), calc(100vh / 900));
+    --cream: #f5efe2;
+    --muted: rgba(245, 239, 226, .62);
+    --line: rgba(245, 239, 226, .14);
+    --line-strong: rgba(245, 239, 226, .34);
+    --accent: #ffffff;              /* was orange — the site is now black and white only */
+    --ink: #121210;
+    --night: #05060a;
+    --display: "Unbounded", system-ui, sans-serif;
+    --mono: "Onest", system-ui, sans-serif;   /* small captions: same popular font as the text, no code look */
+    --gutter: 44px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    background: var(--night); color: var(--cream);
+    font-family: "Onest", system-ui, sans-serif; font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  img, video { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
+
+  /* ---------- Valley (fixed behind everything) ---------- */
+  .sky {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(120% 60% at 50% 62%, #1b1e25 0%, #101215 38%, transparent 70%),
+      linear-gradient(#030408 0%, #0c0d10 55%, #05060a 100%);
+  }
+  #valley { position: fixed; inset: 0; z-index: -1; transition: opacity .3s linear; }
+  #valley canvas { display: block; width: 100% !important; height: 100% !important; }
+  #vignette {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .4;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.85) 100%);
+  }
+  .no-webgl #valley { display: none; }
+
+  .loader { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; transition: opacity 1s ease; pointer-events: none; }
+  .loader.gone { opacity: 0; }
+  .loader span { width: 9px; height: 9px; border-radius: 50%; background: var(--cream); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(.4); opacity: .4; } }
+
+  /* ---------- Header ---------- */
+  .top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px var(--gutter); transition: background .3s ease, padding .3s ease;
+  }
+  .top.solid { background: rgba(5, 6, 10, .78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .logo { font-family: var(--mono); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .nav { display: flex; align-items: center; gap: 40px; list-style: none; }
+  .nav a:not(.pill) { font-size: 13px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; transition: opacity .2s; }
+  .nav a:not(.pill):hover { opacity: .6; }
+  .pill {
+    display: inline-flex; align-items: center; height: 44px; padding: 0 24px; border-radius: 99px;
+    background: var(--cream); color: var(--ink); font-size: 14px; font-weight: 600; transition: background .25s, transform .25s;
+  }
+  .pill:hover { background: #fff; box-shadow: 0 0 0 1.5px #fff, 0 8px 24px rgba(255,255,255,.18); transform: translateY(-1px); }
+
+  /* ---------- Hero ---------- */
+  .ui { opacity: 0; transition: opacity 1.6s ease; }
+  .ui.on { opacity: 1; }
+  .hero { position: relative; height: 100vh; height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 20px; }
+  /* a soft dark pool behind the words so they read over the flowers */
+  .hero { isolation: isolate; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; left: 50%; top: 50%; width: min(1100px, 120vw); height: min(560px, 70vh);
+    transform: translate(-50%, -46%); pointer-events: none; z-index: -1;
+    background: radial-gradient(closest-side, rgba(5,6,10,.78), rgba(5,6,10,.45) 55%, transparent);
+  }
+  .cap { text-shadow: 0 1px 12px rgba(5,6,10,.9); }
+  /* 3D title: white extruded letters; main.js pushes the ones near the cursor away in depth */
+  .hero { perspective: 1100px; }
+  .hero h1 {
+    font: 800 calc(132 * var(--u)) / 1 "Unbounded", system-ui, sans-serif;
+    letter-spacing: -.045em; white-space: nowrap; margin-top: calc(30 * var(--u)); color: #fff;
+    transform-style: preserve-3d; touch-action: manipulation;
+  }
+  .title3d .ch { display: inline-block; transform-style: preserve-3d; will-change: transform, opacity; }
+  .title3d .in {
+    display: inline-block; animation: float 3.4s ease-in-out infinite alternate;
+    text-shadow: 0 1px 0 #e6e6e6, 0 2px 0 #cfcfcf, 0 3px 0 #b8b8b8, 0 4px 0 #a1a1a1, 0 5px 0 #8a8a8a, 0 8px 18px rgba(0,0,0,.55), 0 0 40px rgba(5,6,10,.4);
+  }
+  @keyframes float { from { transform: translateY(.03em); } to { transform: translateY(-.05em); } }
+  .title3d .word { display: inline-block; white-space: nowrap; transform-style: preserve-3d; }
+  .sec-head.works-head { perspective: 1100px; display: block; text-align: center; }
+  h2.title3d { color: #fff; transform-style: preserve-3d; touch-action: manipulation; font-size: clamp(44px, 7vw, 108px); }
+  .cap { margin-top: calc(44 * var(--u)); font-size: max(16px, calc(20 * var(--u))); line-height: 1.35; }
+  .go {
+    display: grid; place-items: center; margin-top: calc(34 * var(--u));
+    width: max(52px, calc(60 * var(--u))); height: max(52px, calc(60 * var(--u)));
+    border: 1.5px solid var(--cream); border-radius: 50%; transition: background .3s, color .3s;
+  }
+  .go:hover, .go:focus-visible { background: var(--cream); color: var(--ink); }
+  .go svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Sections ---------- */
+  main { position: relative; }
+  .sections { background: linear-gradient(rgba(5,6,10,0) 0, rgba(5,6,10,.72) 30vh, rgba(5,6,10,.82) 100%); }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 var(--gutter); }
+  section.block { padding: 120px 0; }
+  section.block + section.block { border-top: 1px solid var(--line); }
+  .label { font-family: var(--mono); font-size: 13.5px; font-weight: 500; letter-spacing: .01em; color: var(--muted); }
+  h2 { font: 700 clamp(38px, 5.4vw, 80px) / 1 var(--display); letter-spacing: -.045em; text-transform: lowercase; }
+  h2 b { font-weight: 700; color: #fff; }
+  .sec-head { display: grid; grid-template-columns: 1fr minmax(0, 400px); gap: 32px; align-items: end; margin-bottom: 56px; }
+  .sec-head .label { display: block; margin-bottom: 20px; }
+  .sec-head p { color: var(--muted); }
+
+  /* ---------- Works ---------- */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 99px;
+    border: 1px solid var(--line-strong); font-size: 15px; transition: background .2s, color .2s, border-color .2s;
+  }
+  .chip sup { font-family: var(--mono); font-size: 11px; opacity: .6; }
+  .chip:hover { border-color: var(--cream); }
+  .chip[aria-pressed="true"] { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+  /* folders */
+  .folders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .folders[hidden], .folder-view[hidden] { display: none; }
+  .folders.sub { margin-bottom: 8px; }
+  .folder {
+    position: relative; display: grid; grid-template-rows: 260px auto; border: 1px solid var(--line);
+    border-radius: 10px; background: rgba(12, 12, 16, .72); overflow: hidden; transition: border-color .3s, background .3s;
+  }
+  .folder:hover, .folder:focus-visible { border-color: var(--line-strong); background: rgba(20, 20, 26, .8); }
+  .stack { position: relative; display: block; }
+  .stack > * {
+    position: absolute; left: 50%; top: 54%; width: 46%; aspect-ratio: 4 / 3; object-fit: cover;
+    border-radius: 6px; border: 1px solid var(--line-strong); box-shadow: 0 18px 40px rgba(0,0,0,.55);
+    background: #08070d;
+    transition: transform .55s cubic-bezier(.2,.7,.2,1);
+  }
+  /* обложки без рамок: только свечение иконки, слои не выдают своих краёв */
+  .stack svg.poster-cover { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+  .stack > :nth-child(1) { transform: translate(-50%, -50%) translateX(-40%) rotate(-7deg); }
+  .stack > :nth-child(2) { transform: translate(-50%, -50%) translateX(40%) rotate(6deg); }
+  .stack > :nth-child(3) { transform: translate(-50%, -50%) translateY(-4%); z-index: 1; }
+  .folder:hover .stack > :nth-child(1) { transform: translate(-50%, -50%) translateX(-52%) translateY(-6%) rotate(-11deg); }
+  .folder:hover .stack > :nth-child(2) { transform: translate(-50%, -50%) translateX(52%) translateY(-6%) rotate(10deg); }
+  .folder:hover .stack > :nth-child(3) { transform: translate(-50%, -50%) translateY(-12%) scale(1.04); }
+  .f-info { display: grid; gap: 6px; padding: 22px 70px 26px 26px; border-top: 1px solid var(--line); }
+  .f-title { font: 700 26px / 1.1 "Unbounded", sans-serif; letter-spacing: -.03em; }
+  .f-desc { color: var(--muted); font-size: 15px; }
+  /* line icons: drawn to match the glowing flowers — thin cream strokes with a soft halo */
+  .f-icon { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--cream); }
+  .f-icon svg { width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; opacity: .95; filter: drop-shadow(0 0 9px rgba(245, 239, 226, .55)); transition: filter .35s, transform .45s cubic-bezier(.2,.7,.2,1); }
+  .folder:hover .f-icon svg { filter: drop-shadow(0 0 16px rgba(255, 255, 255, .8)); transform: translateY(-2px); }
+  .meta .m-row { display: flex; align-items: center; gap: 10px; }
+  .meta .m-ico { display: inline-flex; width: 20px; height: 20px; flex: none; color: var(--cream); opacity: .85; }
+  .meta .m-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(245, 239, 226, .45)); }
+  .lb-side .lb-ico { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; color: var(--cream); }
+  .lb-side .lb-ico svg { width: 42px; height: 42px; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 14px rgba(245, 239, 226, .55)); }
+  .f-arrow {
+    position: absolute; right: 22px; bottom: 26px; width: 44px; height: 44px; display: grid; place-items: center;
+    border: 1.5px solid var(--cream); border-radius: 50%; transition: background .3s, color .3s;
+  }
+  .folder:hover .f-arrow { background: var(--cream); color: var(--ink); }
+  /* inside a folder */
+  .fv-head { margin-bottom: 36px; }
+  .back { font-family: var(--mono); font-size: 14px; color: var(--muted); display: inline-flex; min-height: 44px; align-items: center; transition: color .2s; }
+  .back:hover { color: var(--cream); }
+  .fv-title { font: 700 clamp(34px, 4.4vw, 60px) / 1.05 "Unbounded", sans-serif; letter-spacing: -.035em; margin: 6px 0 10px; }
+  .fv-desc { color: var(--muted); max-width: 560px; margin-bottom: 24px; }
+  .chip[aria-current="page"] { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+  .works { list-style: none; columns: 3; column-gap: 20px; }
+  .work { break-inside: avoid; margin-bottom: 20px; }
+  .work[hidden] { display: none; }
+  .work-open { display: block; width: 100%; text-align: left; position: relative; }
+  .media { position: relative; overflow: hidden; background: #0d0d10; border: 1px solid var(--line); border-radius: 6px; }
+  .media img, .media video, .media svg { width: 100%; height: auto; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+  .work-open:hover .media img, .work-open:hover .media video, .work-open:hover .media svg { transform: scale(1.03); }
+  .media.round { display: grid; place-items: center; padding: 12%; }
+  .media.round img { border-radius: 50%; }
+  .media .grid { display: grid; gap: 6px; padding: 6px; }
+  .media .grid img { border-radius: 2px; }
+  .media .tag {
+    position: absolute; right: 10px; bottom: 10px; padding: 3px 8px; border-radius: 99px;
+    font-family: var(--mono); font-size: 11px; background: rgba(5,6,10,.7); color: var(--cream); white-space: nowrap;
+  }
+  .work-open::after {
+    content: "смотреть ↗"; position: absolute; right: 10px; top: 10px; padding: 3px 9px; border-radius: 99px;
+    font-family: var(--mono); font-size: 11px; background: var(--cream); color: var(--ink); opacity: 0; transition: opacity .2s;
+  }
+  .work-open:hover::after, .work-open:focus-visible::after { opacity: 1; }
+  .meta { padding: 14px 2px 0; }
+  .meta h3 { font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .meta .label { display: block; margin-bottom: 4px; }
+
+  /* ---------- Превью видео и нейтральные плашки ---------- */
+  .media { display: block; aspect-ratio: 4 / 3; }
+  .media .backdrop {
+    position: absolute; inset: -10%; background-size: cover; background-position: 50% 45%;
+    filter: blur(26px) brightness(.34) saturate(.9); transform: scale(1.08);
+  }
+  .media > svg { width: 100%; height: 100%; display: block; }
+  .stack svg { display: block; }
+  .media.plate { display: grid; align-content: center; gap: 10px; padding: 26px; background: linear-gradient(165deg, #17181b, #0a0b0c 70%); }
+  .media .p-big { font: 700 clamp(22px, 3.1vw, 40px) / 1 var(--display); letter-spacing: -.045em; color: #f5efe2; }
+  .media .p-sub { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .cover-plate {
+    display: grid; align-content: center; gap: 6px; padding: 14px;
+    background: linear-gradient(165deg, #17181b, #0a0b0c 72%);
+  }
+  .cover-plate .p-big { font-size: 13px; line-height: 1.05; overflow-wrap: anywhere; }
+  .cover-plate .p-sub { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(245,239,226,.45); }
+  .cover-shot { object-fit: cover; }
+  .lb-media .lb-shot { max-width: 100%; max-height: calc(100vh - 92px); width: auto; height: auto; border-radius: 4px; }
+  /* ---------- Lightbox ---------- */
+  .lightbox { width: min(1240px, 100vw - 32px); max-height: calc(100vh - 32px); margin: auto; border: 1px solid var(--line-strong); border-radius: 8px; background: #0a0a0d; color: var(--cream); padding: 0; }
+  .lightbox::backdrop { background: rgba(3, 3, 6, .9); }
+  .lb-inner { display: grid; grid-template-columns: 1fr 330px; max-height: calc(100vh - 34px); }
+  .lb-media { display: flex; align-items: center; justify-content: center; padding: 28px; min-height: 320px; overflow: auto; background: #050507; }
+  .lb-media > img, .lb-media > video { max-height: calc(100vh - 92px); width: auto; height: auto; border-radius: 4px; }
+  .lb-media > svg { width: 100%; height: auto; max-height: calc(100vh - 92px); border-radius: 4px; }
+  .lb-media .round { border-radius: 50%; max-width: 520px; width: 100%; }
+  .lb-media .grid { display: grid; gap: 10px; width: 100%; }
+  .lb-media .grid img { width: 100%; border-radius: 3px; }
+  .lb-side { display: flex; flex-direction: column; gap: 14px; padding: 26px; border-left: 1px solid var(--line); overflow: auto; }
+  .lb-side h3 { font: 700 26px / 1.1 var(--display); letter-spacing: -.03em; }
+  .lb-side p { color: var(--muted); font-size: 15px; }
+  .lb-top { display: flex; justify-content: space-between; align-items: center; }
+  .lb-nav { display: flex; gap: 8px; }
+  .icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-strong); border-radius: 50%; transition: background .2s, color .2s; }
+  .icon-btn:hover { background: var(--cream); color: var(--ink); }
+  .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .lb-side .pill { margin-top: auto; justify-content: center; }
+
+  /* ---------- Prices ---------- */
+  .price-list { list-style: none; border-top: 1px solid var(--line-strong); }
+  .price-row { display: grid; grid-template-columns: 1.1fr 1.6fr auto 130px; align-items: center; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+  .price-row h3 { font: 700 22px / 1.15 var(--display); letter-spacing: -.03em; text-transform: lowercase; }
+  .price-row p { color: var(--muted); font-size: 15px; }
+  .price-row .price { font-family: var(--mono); font-size: 17px; white-space: nowrap; }
+  .price-row .order { font-family: var(--mono); font-size: 14px; justify-self: end; display: inline-flex; align-items: center; min-height: 44px; transition: color .2s; }
+  .price-row:hover .order, .price-row .order:focus-visible { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+  /* numbers under the facts: same rhythm as the rest of the page */
+  .stats { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 56px; }
+  .stats li { border-top: 1px solid var(--line-strong); padding-top: 18px; }
+  .stats .num { display: block; font: 700 clamp(28px, 3.4vw, 44px) / 1 var(--display); letter-spacing: -.04em; margin-bottom: 10px; color: #fff; }
+  .stats .label { display: block; font-size: 13px; }
+  .note { margin-top: 22px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  @media (max-width: 1080px) { .stats { grid-template-columns: repeat(2, 1fr); row-gap: 32px; } }
+  @media (max-width: 820px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ---------- Process ---------- */
+  .steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .step { padding-top: 22px; border-top: 1px solid var(--line-strong); }
+  .step .num { display: block; font: 700 48px / 1 var(--display); letter-spacing: -.04em; color: #fff; margin-bottom: 28px; }
+  .step h3 { font-size: 19px; font-weight: 600; margin-bottom: 8px; }
+  .step p { color: var(--muted); font-size: 15px; }
+  .terms { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 44px; list-style: none; }
+  .terms li { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .terms li::before { content: "✿ "; color: #fff; }
+
+  /* ---------- Contact ---------- */
+  .contact { text-align: center; padding: 160px 0 120px; }
+  .contact h2 { font-size: clamp(44px, 8.6vw, 140px); margin: 22px 0 30px; }
+  .contact .lead { color: var(--muted); max-width: 460px; margin: 0 auto 36px; font-size: 18px; }
+  .contact .pill { height: 56px; padding: 0 34px; font-size: 16px; }
+  .contact-links { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; list-style: none; }
+  .contact .contact-links .pill { transition: background .25s, box-shadow .3s, scale .35s cubic-bezier(.2,.7,.2,1); }
+  .contact .contact-links .pill:hover, .contact .contact-links .pill:focus-visible { scale: 1.1; }
+  footer { border-top: 1px solid var(--line); background: rgba(5,6,10,.9); }
+  footer .wrap { display: flex; justify-content: center; gap: 16px; padding-top: 22px; padding-bottom: 22px; }
+
+  @media (max-width: 1080px) {
+    .works { columns: 2; }
+    .folders { grid-template-columns: repeat(2, 1fr); }
+    .folder { grid-template-rows: 240px auto; }
+    .price-row { grid-template-columns: 1fr auto; row-gap: 6px; }
+    .price-row p { grid-column: 1 / -1; grid-row: 2; }
+    .price-row .order { grid-column: 1 / -1; justify-self: start; min-height: 32px; }
+    .steps { grid-template-columns: repeat(2, 1fr); row-gap: 40px; }
+    .lb-inner { grid-template-columns: 1fr; }
+    .lb-side { border-left: 0; border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 820px) {
+    :root { --u: 1px; --gutter: 18px; }
+    .nav li:not(:last-child) { display: none; }
+    .pill { height: 40px; padding: 0 18px; font-size: 13px; }
+    .hero h1 { font-size: clamp(48px, 15vw, 90px); white-space: normal; line-height: 1.02; }
+    .cap { font-size: 17px; }
+    section.block { padding: 84px 0; }
+    .sec-head { grid-template-columns: 1fr; margin-bottom: 36px; }
+    .works { columns: 1; }
+    .price-row { grid-template-columns: 1fr auto; gap: 6px 16px; }
+    .price-row h3 { font-size: 19px; min-width: 0; }
+    .price-row p, .price-row .order { grid-column: 1 / -1; }
+    .price-row p { grid-row: auto; }
+    .folders { grid-template-columns: 1fr; }
+    .folder { grid-template-rows: 210px auto; }
+    .f-title { font-size: 22px; overflow-wrap: anywhere; }
+    .steps { grid-template-columns: 1fr; }
+    .lb-media { padding: 12px; min-height: 0; }
+    .lb-side { padding: 20px; }
+  }
+  /* ---------- Motion: everything reacts ---------- */
+  /* blocks rise in as they scroll into view (main.js adds .reveal and then .in) */
+  .reveal { opacity: 0; translate: 0 48px; transition: opacity .9s ease, translate 1s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0s); }
+  .reveal.in { opacity: 1; translate: 0 0; }
+  /* price rows slide and the name grows */
+  .price-row { transition: background .3s, padding .4s cubic-bezier(.2,.7,.2,1); }
+  .price-row h3 { transition: scale .4s cubic-bezier(.2,.7,.2,1); transform-origin: left center; }
+  .price-row:hover { background: rgba(255,255,255,.035); padding-left: 14px; padding-right: 14px; }
+  .price-row:hover h3 { scale: 1.08; }
+  /* steps lift, big numbers spin in a little */
+  .step { transition: translate .45s cubic-bezier(.2,.7,.2,1), border-color .3s; }
+  .step .num { display: inline-block; transition: scale .45s cubic-bezier(.2,.7,.2,1); transform-origin: left bottom; }
+  .step:hover { translate: 0 -10px; border-color: #fff; }
+  .step:hover .num { scale: 1.25; }
+  /* buttons and links */
+  .chip, .pill, .icon-btn, .go { transition: background .25s, color .25s, border-color .25s, scale .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s; }
+  .chip:hover, .pill:hover, .icon-btn:hover { scale: 1.06; }
+  .go:hover { scale: 1.12; }
+  .nav a:not(.pill), .back { background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .35s cubic-bezier(.2,.7,.2,1), color .2s, opacity .2s; }
+  .nav a:not(.pill):hover, .back:hover { background-size: 100% 1px; opacity: 1; color: #fff; }
+  .logo { display: inline-block; transition: letter-spacing .4s cubic-bezier(.2,.7,.2,1); }
+  .logo:hover { letter-spacing: .06em; }
+  /* the lightbox opens with a soft zoom */
+  .lightbox[open] { animation: lb-in .45s cubic-bezier(.2,.7,.2,1); }
+  .lightbox[open]::backdrop { animation: fade-in .35s ease; }
+  @keyframes lb-in { from { opacity: 0; scale: .94; translate: 0 20px; } }
+  @keyframes fade-in { from { opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .loader span, .title3d .in, .lightbox[open], .lightbox[open]::backdrop { animation: none; }
+    .reveal { opacity: 1; translate: none; transition: none; }
+    *, *::before, *::after { transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"></div>
+<div id="valley" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+<div class="loader" id="loader" aria-hidden="true"><span></span></div>
+
+<header class="top ui" id="top">
+  <a class="logo" href="#hero">v0ufer</a>
+  <nav aria-label="Разделы">
+    <ul class="nav">
+      <li><a href="#works">Проекты</a></li>
+      <li><a href="#prices">Обо мне</a></li>
+      <li><a href="#process">Как делаю</a></li>
+      <li><a class="pill" href="https://t.me/v0ufer" target="_blank" rel="noopener noreferrer">Написать</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="hero ui" id="hero">
+    <h1 class="title3d">v0ufer</h1>
+    <p class="cap">Играю, стримлю и строю свои миры.<br>Don't panic, just play.</p>
+    <a class="go" href="#works" id="go" aria-label="Смотреть проекты"><svg viewBox="0 0 24 24"><path d="M12 4v16M6 14l6 6 6-6"/></svg></a>
+  </section>
+
+  <div class="sections">
+    <section class="block" id="works">
+      <div class="wrap">
+        <div class="sec-head works-head">
+          <div>
+            <h2 class="title3d">проекты</h2>
+          </div>
+        </div>
+        <!-- Folders and cards are built by main.js from FOLDERS and WORKS at its top — add new works there -->
+        <div class="folders"></div>
+        <div class="folder-view" hidden>
+          <div class="fv-head">
+            <a class="back" href="#works">← Все разделы</a>
+            <h3 class="fv-title"></h3>
+            <p class="fv-desc"></p>
+          </div>
+          <ul class="works"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="prices">
+      <div class="wrap">
+        <div class="sec-head">
+          <div>
+            <h2>кто <b>я такой</b></h2>
+          </div>
+          <p>В интернете я v0ufer, можно просто вуф. Дальше — коротко о том, чем живу.</p>
+        </div>
+        <ul class="price-list">
+          <li class="price-row"><h3>вуфер</h3><p>Ник v0ufer с 2022 года: сначала ролики про чужие Minecraft-серверы, потом свои проекты, стримы и эдиты.</p><span class="price">v0ufer</span></li>
+          <li class="price-row"><h3>YouTube</h3><p>Канал с 2 июня 2022 года: шортсы про Minecraft, трейлеры серверов, мемы и эдиты по CS2. «Don't panic, just play» — оттуда.</p><span class="price">с 2022</span></li>
+          <li class="price-row"><h3>Twitch</h3><p>Аккаунт с 26 июля 2022 года. Стримлю редко, но метко: играю и общаюсь с теми, кто зашёл.</p><span class="price">с 2022</span></li>
+          <li class="price-row"><h3>Серверы</h3><p>Два своих Minecraft-проекта: LockHub и MugivaraCraft. Ванила, анархия со своими фишками, ивенты и заявки.</p><span class="price">2 проекта</span></li>
+          <li class="price-row"><h3>Код</h3><p>Сайты для серверов на HTML/CSS/JS и GitHub Pages, боты на Python. Всё, чтобы проект жил вне игры.</p><span class="price">github</span></li>
+          <li class="price-row"><h3>CS2</h3><p>Основная игра после Minecraft: 1403 часа в CS2 по Steam — оттуда же эдиты и мувики в TikTok.</p><span class="price">1403 ч</span></li>
+        </ul>
+        <ul class="stats">
+          <li><span class="num">668</span><span class="label">подписчиков на YouTube</span></li>
+          <li><span class="num">163</span><span class="label">видео на канале</span></li>
+          <li><span class="num">237 065</span><span class="label">просмотров всего</span></li>
+          <li><span class="num">1416</span><span class="label">лайков в TikTok</span></li>
+        </ul>
+        <p class="note">Цифры — по открытым страницам каналов на 14 ноября 2026 года.</p>
+      </div>
+    </section>
+
+    <section class="block" id="process">
+      <div class="wrap">
+        <div class="sec-head">
+          <div>
+            <h2>Как я <b>делаю</b></h2>
+          </div>
+          <p>От идеи до публикации — четыре шага, которые повторяются каждый раз.</p>
+        </div>
+        <ol class="steps">
+          <li class="step"><span class="num">01</span><h3>Идея</h3><p>Смотрю, что заходит, и придумываю ролик: промо сервера, мем или эдит под трек.</p></li>
+          <li class="step"><span class="num">02</span><h3>Материал</h3><p>Играю и записываю: строю, стримлю, ловлю моменты, которые потом попадут в кадр.</p></li>
+          <li class="step"><span class="num">03</span><h3>Монтаж</h3><p>Собираю вертикальный ролик: ритм, титры, звук. Коротко — чтобы досмотрели до конца.</p></li>
+          <li class="step"><span class="num">04</span><h3>Публикация</h3><p>Выкладываю в Shorts и TikTok, смотрю, что зашло, и делаю следующее.</p></li>
+        </ol>
+        <ul class="terms">
+          <li>shorts · 5–40 сек</li>
+          <li>вертикальный кадр</li>
+          <li>свой сервер</li>
+          <li>don't panic, just play</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block contact" id="contact">
+      <div class="wrap">
+        <h2>есть <b>идея?</b></h2>
+        <p class="lead">Напиши — обсудим сервер, ролик или сайт для проекта.</p>
+        <ul class="contact-links">
+          <li><a class="pill" href="https://t.me/v0ufer" target="_blank" rel="noopener noreferrer">Telegram @v0ufer</a></li>
+          <li><a class="pill" href="https://www.youtube.com/@v0ufer" target="_blank" rel="noopener noreferrer">YouTube ↗</a></li>
+          <li><a class="pill" href="https://www.tiktok.com/@v0ufer" target="_blank" rel="noopener noreferrer">TikTok ↗</a></li>
+          <li><a class="pill" href="https://github.com/v0ufer" target="_blank" rel="noopener noreferrer">GitHub ↗</a></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="label">v0ufer · don't panic, just play</span>
+  </div>
+</footer>
+
+<dialog class="lightbox" aria-labelledby="lb-title">
+  <div class="lb-inner">
+    <div class="lb-media"></div>
+    <div class="lb-side">
+      <div class="lb-top">
+        <div class="lb-nav">
+          <button class="icon-btn" type="button" data-step="-1" aria-label="Предыдущая работа"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button class="icon-btn" type="button" data-step="1" aria-label="Следующая работа"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <button class="icon-btn lb-close" type="button" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <span class="label lb-count"></span>
+      <h3 id="lb-title"></h3>
+      <p class="lb-desc"></p>
+      <a class="pill lb-link" href="#" target="_blank" rel="noopener noreferrer">Открыть ↗</a>
+    </div>
+  </div>
+</dialog>
+
+<script src="assets/three.min.js"></script>
+<script src="main.js"></script>
+<script src="assets/valley.js"></script>
+</body>
+</html>
