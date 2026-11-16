@@ -198,7 +198,7 @@ Object.keys(FOLDERS).filter(k => !FOLDERS[k].parent).forEach((k, i) => foldersBo
 
 // ---------- Внутри раздела ----------
 let shownWorks = [];
-function openFolder(key) {
+function openFolder(key, animate = true) {
   const f = FOLDERS[key];
   if (!f) return closeFolder();
   view.querySelector('.fv-title').textContent = f.title;
@@ -225,18 +225,57 @@ function openFolder(key) {
     li.append(btn, meta);
     return li;
   }));
-  foldersBox.hidden = true; view.hidden = false;
+  if (!animate || reduce) {
+    foldersBox.hidden = true; view.hidden = false;
+    view.classList.remove('enter', 'leave', 'anim');
+    view.classList.add('in');
+    return;
+  }
+  // плавный переход: карточка разворачивает обложки, список разделов уходит,
+  // работы появляются лесенкой
+  const card = foldersBox.querySelector('a[href="#razdel-' + key + '"]');
+  if (card) card.classList.add('opening');
+  foldersBox.classList.add('out');
+  setTimeout(() => {
+    if (card) card.classList.remove('opening');
+    foldersBox.hidden = true;
+    foldersBox.classList.remove('out');
+    view.hidden = false;
+    view.classList.add('enter');
+    view.classList.remove('in');
+    [...list.children].forEach((li, n) => li.style.setProperty('--wd', Math.min(n, 9) * 55 + 'ms'));
+    // принудительный reflow вместо requestAnimationFrame: анимация не зависит от кадров
+    void view.offsetHeight;
+    view.classList.remove('enter');
+    view.classList.add('in');
+    // страховка: что бы ни случилось, работы должны стать видимыми
+    setTimeout(() => view.classList.add('in'), 900);
+  }, 250);
 }
-function closeFolder() {
-  list.replaceChildren(); subBox.replaceChildren();
-  view.hidden = true; foldersBox.hidden = false;
+function closeFolder(animate = true) {
+  if (!animate || reduce) {
+    list.replaceChildren(); subBox.replaceChildren();
+    view.hidden = true; foldersBox.hidden = false;
+    view.classList.remove('in', 'enter', 'leave');
+    return;
+  }
+  view.classList.add('leave');
+  view.classList.remove('in');
+  setTimeout(() => {
+    list.replaceChildren(); subBox.replaceChildren();
+    view.hidden = true;
+    view.classList.remove('leave', 'enter');
+    foldersBox.hidden = false;
+    foldersBox.classList.add('out');
+    requestAnimationFrame(() => foldersBox.classList.remove('out'));
+  }, 260);
 }
 function route(scroll) {
   const m = location.hash.match(/^#razdel-(\w+)/);
   if (m) {
-    openFolder(m[1]);
-    if (scroll) document.getElementById('works').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
-  } else if (!view.hidden) closeFolder();
+    openFolder(m[1], true);
+    if (scroll) setTimeout(() => document.getElementById('works').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }), reduce ? 0 : 230);
+  } else if (!view.hidden) closeFolder(true);
 }
 addEventListener('hashchange', () => route(true));
 if (location.hash.startsWith('#razdel-')) history.replaceState(null, '', location.pathname + location.search);
@@ -256,15 +295,16 @@ function openLB(i) {
   lb.querySelector('.lb-desc').textContent = w.desc;
   lbCount.textContent = `${String(i + 1).padStart(2, '0')} / ${String(shownWorks.length).padStart(2, '0')} · ${w.label}`;
   if (w.href) { lbLink.href = w.href; lbLink.hidden = false; } else { lbLink.hidden = true; }
+  document.body.classList.add('lb-open');
   if (!lb.open) lb.showModal();
 }
-function closeLB() { lbMedia.replaceChildren(); lb.close(); }
+function closeLB() { lbMedia.replaceChildren(); lb.close(); document.body.classList.remove('lb-open'); }
 lb.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
   openLB((current + +b.dataset.step + shownWorks.length) % shownWorks.length);
 }));
 lb.querySelector('.lb-close').addEventListener('click', closeLB);
 lb.addEventListener('click', e => { if (e.target === lb) closeLB(); });
-lb.addEventListener('close', () => lbMedia.replaceChildren());
+lb.addEventListener('close', () => { lbMedia.replaceChildren(); document.body.classList.remove('lb-open'); });
 lb.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') lb.querySelector('[data-step="1"]').click();
   if (e.key === 'ArrowLeft') lb.querySelector('[data-step="-1"]').click();
@@ -371,6 +411,42 @@ const onScroll = () => {
   header.classList.toggle('solid', scrollY > innerHeight * .6);
 };
 addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+// ---------- Игровой HUD: координаты и «биом» по разделам ----------
+const hudX = document.getElementById('hud-x');
+const hudY = document.getElementById('hud-y');
+const hudZ = document.getElementById('hud-z');
+const hudBiome = document.getElementById('hud-biome');
+const BIOMES = [
+  ['hero', 'кристальная долина'],
+  ['works', 'проекты'],
+  ['prices', 'обо мне'],
+  ['process', 'как я делаю'],
+  ['contact', 'контакты']
+];
+let hudQueued = false;
+function updateHud() {
+  hudQueued = false;
+  if (!hudX) return;
+  const z = Math.round(scrollY / 5);
+  const x = Math.round(Math.sin(scrollY / 640) * 46 + Math.sin(scrollY / 170) * 6);
+  const y = Math.max(4, 96 - Math.round(scrollY / 24));
+  hudX.textContent = (x < 0 ? '−' : '') + String(Math.abs(x)).padStart(3, '0');
+  hudY.textContent = String(y).padStart(2, '0');
+  hudZ.textContent = '−' + String(z).padStart(4, '0');
+  let name = BIOMES[0][1];
+  for (const [id, n] of BIOMES) {
+    const node = document.getElementById(id);
+    if (node && node.getBoundingClientRect().top <= innerHeight * .5) name = n;
+  }
+  if (hudBiome.textContent !== name) hudBiome.textContent = name;
+}
+addEventListener('scroll', () => {
+  if (hudQueued) return;
+  hudQueued = true;
+  requestAnimationFrame(updateHud);
+}, { passive: true });
+updateHud();
 
 // наведение на стрелку поднимает цветы в воздух, уход — отпускает
 const go = document.getElementById('go');
