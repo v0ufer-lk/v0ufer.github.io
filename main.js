@@ -390,8 +390,21 @@ function reveal(nodes, step = .08) {
 reveal([...document.querySelectorAll('.sec-head')], 0);
 reveal([...document.querySelectorAll('.price-row')], .07);
 reveal([...document.querySelectorAll('.stats li'), document.querySelector('.note')], .06);
-reveal([...document.querySelectorAll('.step'), document.querySelector('.terms')], .1);
+reveal([...document.querySelectorAll('.setup-panel')], 0);
 reveal([...document.querySelectorAll('.contact h2, .contact .lead, .contact .contact-links li')], .1);
+
+// ---------- Рисунок сетапа: линии прорисовываются, когда блок в кадре ----------
+const setupArt = document.querySelector('.setup-art');
+if (setupArt) {
+  if ('IntersectionObserver' in window && !reduce) {
+    const artIO = new IntersectionObserver(entries => entries.forEach(en => {
+      if (en.isIntersecting) { setupArt.classList.add('draw'); artIO.disconnect(); }
+    }), { threshold: .35 });
+    artIO.observe(setupArt);
+  } else {
+    setupArt.classList.add('draw');
+  }
+}
 
 // ---------- Загрузка, шапка, долина ----------
 const loader = document.getElementById('loader');
@@ -421,7 +434,7 @@ const BIOMES = [
   ['hero', 'кристальная долина'],
   ['works', 'проекты'],
   ['prices', 'обо мне'],
-  ['process', 'как я делаю'],
+  ['process', 'сетап'],
   ['contact', 'контакты']
 ];
 let hudQueued = false;

@@ -325,6 +325,21 @@
   .terms li { font-family: var(--mono); font-size: 13px; color: var(--muted); }
   .terms li::before { content: "✿ "; color: #fff; }
 
+  /* ---------- Сетап ---------- */
+  .setup-wrap { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: center; }
+  .setup-art svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .setup-art .ln { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .setup-art.draw .ln { animation: draw-line .62s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: var(--d, 0s); }
+  @keyframes draw-line { to { stroke-dashoffset: 0; } }
+  .setup-panel { border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; background: rgba(255,255,255,.022); }
+  .setup-panel h3 { font: 700 18px / 1.2 var(--display); letter-spacing: -.02em; margin-bottom: 12px; }
+  .setup-list { display: grid; }
+  .setup-row { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .setup-row:last-child { border-bottom: 0; }
+  .setup-row dt { color: var(--muted); }
+  .setup-row dd { color: var(--cream); text-align: right; }
+  @media (max-width: 820px) { .setup-wrap { grid-template-columns: 1fr; gap: 26px; } }
+  @media (prefers-reduced-motion: reduce) { .setup-art .ln { stroke-dashoffset: 0; animation: none; } }
   /* ---------- Contact ---------- */
   .contact { text-align: center; padding: 160px 0 120px; }
   .contact h2 { font-size: clamp(44px, 8.6vw, 140px); margin: 22px 0 30px; }
@@ -420,7 +435,7 @@
     <ul class="nav">
       <li><a href="#works">Проекты</a></li>
       <li><a href="#prices">Обо мне</a></li>
-      <li><a href="#process">Как делаю</a></li>
+      <li><a href="#process">Сетап</a></li>
       <li><a class="pill" href="https://t.me/v0ufer" target="_blank" rel="noopener noreferrer">Написать</a></li>
     </ul>
   </nav>
@@ -480,26 +495,50 @@
       </div>
     </section>
 
-    <section class="block" id="process">
+<section class="block" id="process">
       <div class="wrap">
         <div class="sec-head">
           <div>
-            <h2>Как я <b>делаю</b></h2>
+            <h2>мой <b>сетап</b></h2>
           </div>
-          <p>От идеи до публикации — четыре шага, которые повторяются каждый раз.</p>
+          <p>Всё, на чём пишутся ролики, собираются серверы и живут сайты.</p>
         </div>
-        <ol class="steps">
-          <li class="step"><span class="num">01</span><h3>Идея</h3><p>Смотрю, что заходит, и придумываю ролик: промо сервера, мем или эдит под трек.</p></li>
-          <li class="step"><span class="num">02</span><h3>Материал</h3><p>Играю и записываю: строю, стримлю, ловлю моменты, которые потом попадут в кадр.</p></li>
-          <li class="step"><span class="num">03</span><h3>Монтаж</h3><p>Собираю вертикальный ролик: ритм, титры, звук. Коротко — чтобы досмотрели до конца.</p></li>
-          <li class="step"><span class="num">04</span><h3>Публикация</h3><p>Выкладываю в Shorts и TikTok, смотрю, что зашло, и делаю следующее.</p></li>
-        </ol>
-        <ul class="terms">
-          <li>shorts · 5–40 сек</li>
-          <li>вертикальный кадр</li>
-          <li>свой сервер</li>
-          <li>don't panic, just play</li>
-        </ul>
+        <div class="setup-wrap">
+          <div class="setup-art">
+            <svg viewBox="0 0 620 380" aria-hidden="true" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path class="ln" pathLength="1" style="--d:0s" d="M24 332 H596"/>
+              <path class="ln" pathLength="1" style="--d:.05s" d="M58 358 H562"/>
+              <rect class="ln" pathLength="1" style="--d:.12s" x="150" y="64" width="96" height="176" rx="6"/>
+              <rect class="ln" pathLength="1" style="--d:.18s;opacity:.5" x="158" y="72" width="80" height="160" rx="3"/>
+              <rect class="ln" pathLength="1" style="--d:.26s" x="286" y="78" width="212" height="124" rx="7"/>
+              <rect class="ln" pathLength="1" style="--d:.32s;opacity:.5" x="295" y="87" width="194" height="106" rx="3"/>
+              <path class="ln" pathLength="1" style="--d:.5s" d="M236 282 L 378 282 L 396 312 L 218 312 Z"/>
+              <path class="ln" pathLength="1" style="--d:.56s" d="M243 292 L 372 292"/>
+              <path class="ln" pathLength="1" style="--d:.6s" d="M232 302 L 383 302"/>
+              <path class="ln" pathLength="1" style="--d:.66s" d="M286 306 H 330"/>
+              <path class="ln" pathLength="1" style="--d:.7s" d="M452 288 c13 0 20 8 20 16 0 8-7 12-20 12 -13 0-20-4-20-12 0-8 7-16 20-16z"/>
+              <path class="ln" pathLength="1" style="--d:.76s" d="M452 292 V306"/>
+              <path class="ln" pathLength="1" style="--d:.82s" d="M86 332 V240"/>
+              <rect class="ln" pathLength="1" style="--d:.88s" x="74" y="198" width="24" height="40" rx="12"/>
+              <path class="ln" pathLength="1" style="--d:.94s" d="M63 234 a23 23 0 0 0 46 0"/>
+              <rect class="ln" pathLength="1" style="--d:1s" x="508" y="236" width="68" height="96" rx="6"/>
+              <circle class="ln" pathLength="1" style="--d:1.06s" cx="542" cy="256" r="5"/>
+              <path class="ln" pathLength="1" style="--d:1.12s" d="M518 292 H566 M518 308 H566"/>
+            </svg>
+          </div>
+          <div class="setup-panel">
+            <h3>железо</h3>
+            <dl class="setup-list">
+              <div class="setup-row"><dt>Процессор</dt><dd>Intel Core i5-14400F</dd></div>
+              <div class="setup-row"><dt>Видеокарта</dt><dd>GeForce RTX 5060 Ti</dd></div>
+              <div class="setup-row"><dt>Монитор 1 · основной</dt><dd>MUCAi 24" · 300 Гц</dd></div>
+              <div class="setup-row"><dt>Монитор 2</dt><dd>AOC 24" · 165 Гц</dd></div>
+              <div class="setup-row"><dt>Микрофон</dt><dd>Fifine AM8</dd></div>
+              <div class="setup-row"><dt>Мышь</dt><dd>AJAZZ AJ159 APEX</dd></div>
+              <div class="setup-row"><dt>Клавиатура</dt><dd>AULA AU75</dd></div>
+            </dl>
+          </div>
+        </div>
       </div>
     </section>
 
